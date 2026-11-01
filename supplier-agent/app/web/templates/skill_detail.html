@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>{{ s.name }} <span class="tag">查看 v{{ cur.version }}</span>{% if cur.version == s.active_version %} <span class="tag done">启用中</span>{% endif %}</h1></div>
+{% if error %}<div class="alert err">{{ error }}</div>{% endif %}
+<div class="grid g3">
+<div class="card"><h2>版本</h2>
+<table>{% for v in versions %}<tr><td><a href="/skills/{{ s.key }}?v={{ v.version }}">v{{ v.version }}</a>{% if v.version == s.active_version %} <span class="tag done">启用</span>{% endif %}</td>
+<td class="small">{{ v.created_by }}<br>{{ v.created_at|dt }}</td><td class="small">{{ v.note }}</td>
+<td>{% if v.version != s.active_version and can('manager') %}<form method="post" action="/skills/{{ s.key }}/activate/{{ v.version }}"><button class="ghost sm">启用/回滚</button></form>{% endif %}</td></tr>{% endfor %}</table>
+</div>
+<div class="card"><h2>测试结果（v{{ cur.version }}）<span class="tag {{ 'done' if result.passed else 'failed' }}">{{ result.total - result.failed }}/{{ result.total }}</span></h2>
+<ul class="small">{% for r in result.results %}<li><span class="tag {{ 'done' if r.passed else 'failed' }}">{{ '通过' if r.passed else '失败' }}</span> {{ r.name }} {% for e in r.errors %}<div style="color:#c0322b">{{ e }}</div>{% endfor %}</li>{% endfor %}</ul>
+</div>
+<div class="card"><h2>概要</h2>
+<h3>输入</h3><ul class="small">{% for x in cur.content.get('inputs',[]) %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>输出</h3><ul class="small">{% for x in cur.content.get('outputs',[]) %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>判断规则</h3><ul class="small">{% for x in cur.content.get('decision_rules',[]) %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>执行边界</h3><ul class="small">{% for x in cur.content.get('boundaries',[]) %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>异常处理</h3><ul class="small">{% for x in cur.content.get('exceptions',[]) %}<li>{{ x }}</li>{% endfor %}</ul>
+<h3>资料来源</h3><ul class="small">{% for x in cur.content.get('sources',[]) %}<li>{{ x.doc }} {{ x.section }} — <b>{{ x.status }}</b></li>{% endfor %}</ul>
+<h3>待确认冲突</h3><ul class="small">{% for x in cur.content.get('pending_conflicts',[]) %}<li>{{ x }}</li>{% else %}<li class="muted">无</li>{% endfor %}</ul>
+</div></div>
+{% if can('manager') %}
+<form class="card" method="post" action="/skills/{{ s.key }}/save">
+  <h2>编辑为新版本（JSON；rules 为机器执行规则，test_cases 为可执行测试用例）</h2>
+  <textarea name="content" rows="28" style="font-family:Consolas,monospace;font-size:12.5px">{{ content_json }}</textarea>
+  <div class="row"><input name="note" placeholder="修改说明（必填建议：依据哪份资料哪一节）" style="flex:1">
+  <label><input type="checkbox" name="activate"> 测试全部通过后立即启用</label><button>保存新版本</button></div>
+</form>
+{% else %}<div class="card"><pre>{{ content_json }}</pre></div>{% endif %}
+{% endblock %}

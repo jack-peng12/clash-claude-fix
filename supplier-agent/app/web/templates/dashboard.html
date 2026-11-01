@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>工作台</h1>
+  <div class="row">
+    {% if can('staff') %}
+    <form class="inline" method="post" action="/jobs/run/poll_inbox"><button class="ghost sm">立即收信</button></form>
+    <form class="inline" method="post" action="/jobs/run/followups"><button class="ghost sm">立即检查跟进</button></form>
+    <a class="btn sm" href="/tasks/new">新建采购任务</a>
+    {% endif %}
+  </div>
+</div>
+{% if st.sandbox_mode %}<div class="alert">沙盒模式已开启：所有对外邮件都会改发到 <b>{{ st.sandbox_address }}</b>，不会发给真实供应商。正式使用前请在“系统设置”关闭。</div>{% endif %}
+{% if not st.outbound_enabled %}<div class="alert err">对外发送总开关已关闭：AI 与员工都不能发送消息。</div>{% endif %}
+{% if not llm_on %}<div class="alert">LLM 未配置：系统以规则引擎运行（搜索、采集、筛选、询价、回复识别均可用；个性化文案和中文翻译能力降级）。</div>{% endif %}
+{% if budget.warn %}<div class="alert err">LLM 费用接近或超出预算：今日 ${{ '%.3f'|format(budget.day) }} / 本月 ${{ '%.3f'|format(budget.month) }}</div>{% endif %}
+<div class="grid g4" style="margin-bottom:16px">
+  <div class="stat"><b>{{ stats.suppliers }}</b><span>供应商总数</span></div>
+  <div class="stat"><b><a href="/handoffs">{{ stats.handoff_open }}</a></b><span>待接手高意向</span></div>
+  <div class="stat"><b>{{ stats.sent_24h }} / {{ stats.in_24h }}</b><span>24小时 发出 / 收到</span></div>
+  <div class="stat"><b>{{ stats.tasks_running }}</b><span>运行中任务</span></div>
+  <div class="stat"><b><a href="/messages?filter=drafts">{{ stats.drafts }}</a></b><span>待审核草稿</span></div>
+  <div class="stat"><b><a href="/manual">{{ stats.manual }}</a></b><span>人工确认待办</span></div>
+  <div class="stat"><b>{{ cat_counts.get('match',0) }} / {{ cat_counts.get('insufficient',0) }}</b><span>符合 / 资料不足</span></div>
+  <div class="stat"><b>{{ cat_counts.get('high_risk',0) }} / {{ cat_counts.get('no_match',0) }}</b><span>高风险 / 不符合</span></div>
+</div>
+<div class="grid g2">
+  <div class="card"><div class="row" style="justify-content:space-between"><h2>通知</h2>
+    <form method="post" action="/notifications/read"><button class="ghost sm">全部已读</button></form></div>
+    <ul class="notes">{% for n in notes %}
+      <li><span class="tag {{ 'failed' if n.level=='error' else 'draft' if n.level=='warning' else 'done' if n.level=='success' else '' }}">{{ n.level }}</span>
+      {% if not n.read %}<b>{% endif %}<a href="{{ n.link or '#' }}">{{ n.title }}</a>{% if not n.read %}</b>{% endif %}
+      <span class="muted small">{{ n.created_at|dt }}</span><div class="small muted">{{ n.body }}</div></li>
+    {% else %}<li class="muted">暂无通知</li>{% endfor %}</ul>
+  </div>
+  <div class="card"><h2>后台任务</h2>
+    <table><tr><th>#</th><th>类型</th><th>状态</th><th>结果/错误</th><th>时间</th></tr>
+    {% for j in jobs %}<tr><td>{{ j.id }}</td><td>{{ j.jtype }}</td><td><span class="tag {{ j.status }}">{{ j.status }}</span></td>
+      <td class="small">{{ j.last_error[:120] }}</td><td class="small">{{ j.created_at|dt }}</td></tr>{% endfor %}</table>
+    <p class="small muted">供应商状态：{% for k,v in status_counts.items() %}{{ k|label('supplier_status') }} {{ v }}　{% endfor %}</p>
+  </div>
+</div>
+{% endblock %}

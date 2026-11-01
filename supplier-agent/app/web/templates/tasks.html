@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>采购任务</h1>{% if can('staff') %}<a class="btn" href="/tasks/new">新建采购任务</a>{% endif %}</div>
+<table>
+<tr><th>#</th><th>任务</th><th>国家</th><th>状态</th><th>自动建联</th><th>持续</th><th>轮次</th><th>供应商</th><th>统计</th><th>创建</th></tr>
+{% for t in tasks %}
+<tr>
+  <td>{{ t.id }}</td>
+  <td><a href="/tasks/{{ t.id }}">{{ t.title }}</a>{% if t.is_template %} <span class="tag">模板</span>{% endif %}</td>
+  <td>{{ t.spec.get('countries', [])|map(attribute='zh')|join('、') }}</td>
+  <td><span class="tag {{ t.status }}">{{ t.status|label('task_status') }}</span></td>
+  <td>{{ '是' if t.auto_outreach else '否（草稿待审）' }}</td>
+  <td>{{ '是' if t.continuous else '否' }}</td>
+  <td>{{ t.rounds_done }}</td>
+  <td>{{ counts.get(t.id, 0) }}</td>
+  <td class="small muted">{% for k,v in (t.stats or {}).items() %}{{ k }}={{ v }} {% endfor %}</td>
+  <td class="small">{{ t.created_at|dt }}</td>
+</tr>
+{% else %}<tr><td colspan="10" class="muted">还没有任务</td></tr>{% endfor %}
+</table>
+{% endblock %}

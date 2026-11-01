@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>#{{ t.id }} {{ t.title }} <span class="tag {{ t.status }}">{{ t.status|label('task_status') }}</span></h1>
+  {% if can('staff') %}<div class="row">
+    {% for a,l in [('start','启动'),('pause','暂停'),('resume','恢复'),('cancel','取消'),('clone','复制')] %}
+      {% if (a=='start' and t.status in ['draft','completed','failed']) or (a=='pause' and t.status in ['running','queued'])
+         or (a=='resume' and t.status=='paused') or (a=='cancel' and t.status not in ['cancelled']) or a=='clone' %}
+      <form class="inline" method="post" action="/tasks/{{ t.id }}/action/{{ a }}"><button class="{{ 'danger' if a=='cancel' else 'ghost' }} sm">{{ l }}</button></form>
+      {% endif %}
+    {% endfor %}</div>{% endif %}
+</div>
+{% if t.last_error %}<div class="alert err">{{ t.last_error }}</div>{% endif %}
+<div class="grid g2">
+<div class="card">
+  <h2>原始需求</h2><p>{{ t.raw_text or '—' }}</p>
+  <p class="small">国家：{% for c in t.spec.get('countries',[]) %}{{ c.zh }}({{ c.name }}, 语言 {{ c.langs|join('/') }}) {% endfor %}
+  ｜公司类型：{{ t.spec.get('company_types',[])|join(', ') or '不限' }}｜目标：{{ t.spec.get('target_suppliers') }} 家
+  ｜参数：{{ t.spec.get('params',{}) }}</p>
+  <p class="small">自动建联：<b>{{ '开启' if t.auto_outreach else '关闭（草稿待审）' }}</b>　持续开发：{{ '是' if t.continuous else '否' }}　已运行轮次：{{ t.rounds_done }}</p>
+  <p class="small muted">{% for k,v in (t.stats or {}).items() %}{{ k }}={{ v }}　{% endfor %}</p>
+</div>
+<div class="card">
+  <h2>编辑条件</h2>
+  <form method="post" action="/tasks/{{ t.id }}/edit">
+    <div class="row"><input name="title" value="{{ t.title }}">
+      <input name="countries" value="{{ t.spec.get('countries',[])|map(attribute='zh')|join(',') }}" title="国家">
+      <input name="company_types" value="{{ t.spec.get('company_types',[])|join(',') }}" title="公司类型">
+      <input name="target_suppliers" type="number" value="{{ t.spec.get('target_suppliers',20) }}" style="width:80px"></div>
+    <details><summary class="small">条件等级</summary>{% with levels=t.spec.get('levels',{}) %}{% include "_levels.html" %}{% endwith %}</details>
+    <div class="row"><label><input type="checkbox" name="auto_outreach" {{ 'checked' if t.auto_outreach }}> 自动建联</label>
+      <label><input type="checkbox" name="continuous" {{ 'checked' if t.continuous }}> 持续开发</label>
+      <label><input type="checkbox" name="is_template" {{ 'checked' if t.is_template }}> 模板</label>
+      {% if can('staff') %}<button class="sm">保存</button>{% endif %}</div>
+  </form>
+</div>
+</div>
+<div class="card"><h2>本任务供应商（{{ links|length }}）</h2>
+<table><tr><th>供应商</th><th>国家</th><th>符合度</th><th>得分</th><th>风险</th><th>状态</th><th>意向</th><th>判定原因</th><th>来源关键词</th></tr>
+{% for l, s in links %}<tr>
+  <td><a href="/suppliers/{{ s.id }}">{{ s.name }}</a><div class="small muted">{{ s.domain }}</div></td>
+  <td class="small">{{ s.country_hint }}</td>
+  <td><span class="tag {{ l.fit_category }}">{{ l.fit_category|label('fit') }}</span></td><td>{{ l.fit_score }}</td>
+  <td><span class="tag {{ s.risk_level }}">{{ s.risk_level|label('risk') }}</span></td>
+  <td><span class="tag {{ s.status }}">{{ s.status|label('supplier_status') }}</span></td>
+  <td><span class="tag {{ s.intent_level }}">{{ s.intent_level|label('intent') }}</span></td>
+  <td class="small">{{ l.assessment.get('reason','') }}</td><td class="small muted">{{ l.found_by_query }}</td>
+</tr>{% endfor %}</table></div>
+<div class="card"><h2>搜索记录（{{ runs|length }}）</h2>
+<table><tr><th>轮</th><th>关键词</th><th>语言</th><th>来源</th><th>状态</th><th>结果</th><th>相关</th><th>新供应商</th><th>错误</th><th>时间</th></tr>
+{% for r in runs %}<tr><td>{{ r.round_no }}</td><td>{{ r.query }}</td><td>{{ r.lang }}</td><td>{{ r.origin }}</td>
+<td><span class="tag {{ r.status }}">{{ r.status }}</span></td><td>{{ r.result_count }}</td><td>{{ r.relevant_count }}</td><td>{{ r.new_suppliers }}</td>
+<td class="small">{{ r.error[:100] }}</td><td class="small">{{ r.created_at|dt }}</td></tr>{% endfor %}</table></div>
+{% endblock %}

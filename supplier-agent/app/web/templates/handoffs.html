@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>高意向人工接管中心</h1></div>
+<div class="alert">转人工后 AI 立即停止对该供应商的自动对外沟通。深度谈判、议价、尽调、签约、付款与交付由员工负责；AI 无签约、付款或承诺成交权限。</div>
+<table><tr><th>#</th><th>供应商</th><th>来源</th><th>原因</th><th>意向分</th><th>风险</th><th>符合度</th><th>状态</th><th>负责人</th><th>时间</th><th>操作</th></tr>
+{% for h, s in rows %}<tr>
+<td>{{ h.id }}</td><td><a href="/suppliers/{{ s.id }}">{{ s.name }}</a><div class="small muted">{{ s.domain }}</div></td>
+<td>{{ 'AI识别' if h.source=='ai' else '员工手动' }}</td><td class="small">{{ h.reason }}</td><td>{{ h.score|int }}</td>
+<td><span class="tag {{ s.risk_level }}">{{ s.risk_level|label('risk') }}</span></td>
+<td><span class="tag {{ s.fit_category }}">{{ s.fit_category|label('fit') }}</span></td>
+<td><span class="tag {{ h.status }}">{{ {'open':'待接手','accepted':'已接手','closed':'已关闭'}[h.status] }}</span></td>
+<td>{{ users[h.assigned_to].username if h.assigned_to else '' }}</td><td class="small">{{ h.created_at|dt }}</td>
+<td>{% if can('staff') %}{% if h.status=='open' %}<form class="inline" method="post" action="/handoffs/{{ h.id }}/accept"><button class="sm">我来接手</button></form>{% endif %}
+{% if h.status!='closed' %}<form class="inline" method="post" action="/handoffs/{{ h.id }}/close"><button class="ghost sm">关闭</button></form>{% endif %}{% endif %}</td>
+</tr>{% else %}<tr><td colspan="11" class="muted">暂无</td></tr>{% endfor %}</table>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>人工确认待办</h1></div>
+<div class="alert">平台不允许自动执行的动作（陌生私信、加群、社群发帖、无邮箱供应商的表单/电话联系等）由 AI 准备内容和目标，员工在平台上执行后点“已完成”。系统不会绕过平台权限、验证码或反滥用机制。</div>
+{% if can('staff') %}
+<form class="card row" method="post" action="/manual/post-draft">
+  <span>为任务生成求购帖：</span><input name="task_id" placeholder="任务ID" style="width:90px">
+  <select name="platform">{% for p in ['reddit','facebook','linkedin','telegram','discord'] %}<option>{{ p }}</option>{% endfor %}</select>
+  <button class="sm">生成</button>
+</form>
+{% endif %}
+<table><tr><th>#</th><th>平台</th><th>动作</th><th>供应商</th><th>目标</th><th>内容</th><th>状态</th><th>时间</th><th></th></tr>
+{% for a in rows %}<tr><td>{{ a.id }}</td><td>{{ a.platform }}</td><td>{{ a.action }}</td>
+<td>{% if a.supplier_id %}<a href="/suppliers/{{ a.supplier_id }}">{{ sups[a.supplier_id].name }}</a>{% endif %}</td>
+<td class="small">{{ a.target }}</td><td><pre style="max-height:160px">{{ a.content }}</pre></td>
+<td><span class="tag {{ a.status }}">{{ a.status }}</span></td><td class="small">{{ a.created_at|dt }}</td>
+<td>{% if a.status=='pending' and can('staff') %}<form class="inline" method="post" action="/manual/{{ a.id }}/done"><button class="sm">已完成</button></form>
+<form class="inline" method="post" action="/manual/{{ a.id }}/skip"><button class="ghost sm">跳过</button></form>{% endif %}</td></tr>
+{% else %}<tr><td colspan="9" class="muted">暂无</td></tr>{% endfor %}</table>
+{% endblock %}

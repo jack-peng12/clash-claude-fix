@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>系统日志</h1></div>
+<p class="tabs">{% for k,l in [('audit','关键操作日志'),('system','系统/错误日志'),('jobs','后台任务')] %}<a href="/logs?kind={{ k }}" class="{{ 'on' if kind==k }}">{{ l }}</a>{% endfor %}</p>
+<table>
+{% if kind == 'audit' %}<tr><th>时间</th><th>操作者</th><th>动作</th><th>对象</th><th>详情</th></tr>
+{% for r in rows %}<tr><td class="small">{{ r.created_at|dt('%m-%d %H:%M:%S') }}</td><td>{{ r.actor }}</td><td>{{ r.action }}</td><td class="small">{{ r.target }}</td><td class="small">{{ r.detail[:300] }}</td></tr>{% endfor %}
+{% elif kind == 'system' %}<tr><th>时间</th><th>级别</th><th>来源</th><th>内容</th></tr>
+{% for r in rows %}<tr><td class="small">{{ r.created_at|dt('%m-%d %H:%M:%S') }}</td><td><span class="tag {{ 'failed' if r.level=='ERROR' else 'draft' if r.level=='WARNING' else '' }}">{{ r.level }}</span></td><td>{{ r.source }}</td><td class="small"><pre style="margin:0;max-height:120px">{{ r.message }}</pre></td></tr>{% endfor %}
+{% else %}<tr><th>#</th><th>类型</th><th>参数</th><th>状态</th><th>尝试</th><th>计划时间</th><th>结果/错误</th></tr>
+{% for r in rows %}<tr><td>{{ r.id }}</td><td>{{ r.jtype }}</td><td class="small">{{ r.payload }}</td><td><span class="tag {{ r.status }}">{{ r.status }}</span></td><td>{{ r.attempts }}/{{ r.max_attempts }}</td><td class="small">{{ r.run_after|dt }}</td><td class="small">{{ r.last_error[:200] }}</td></tr>{% endfor %}
+{% endif %}
+</table>
+{% endblock %}

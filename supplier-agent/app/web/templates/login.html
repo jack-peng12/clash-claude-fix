@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>登录 - 供应商开发Agent</title>
+<link rel="stylesheet" href="/static/style.css"></head>
+<body>
+<div class="login card">
+  <h1 style="margin-bottom:14px">全球现成公司供应商开发Agent</h1>
+  {% if error %}<div class="alert err">{{ error }}</div>{% endif %}
+  <form method="post" action="/login">
+    <label>用户名</label><input name="username" autofocus style="width:100%">
+    <label>密码</label><input name="password" type="password" style="width:100%">
+    <p><button type="submit" style="width:100%">登录</button></p>
+  </form>
+</div>
+</body></html>

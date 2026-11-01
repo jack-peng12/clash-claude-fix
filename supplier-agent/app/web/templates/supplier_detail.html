@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top">
+  <h1>{{ s.name }} <span class="tag {{ s.status }}">{{ s.status|label('supplier_status') }}</span>
+    <span class="tag {{ s.fit_category }}">{{ s.fit_category|label('fit') }}</span>
+    <span class="tag {{ s.intent_level }}">意向 {{ s.intent_level|label('intent') }} {{ s.intent_score|int }}</span>
+    <span class="tag {{ s.risk_level }}">风险 {{ s.risk_level|label('risk') }}</span></h1>
+  <div class="row">
+  {% if can('staff') and not s.taken_over %}<form class="inline" method="post" action="/suppliers/{{ s.id }}/takeover"><button class="sm">人工接管（AI停止对外发送）</button></form>{% endif %}
+  {% if can('manager') and s.taken_over %}<form class="inline" method="post" action="/suppliers/{{ s.id }}/release"><button class="ghost sm">交还AI自动处理</button></form>{% endif %}
+  </div>
+</div>
+{% if s.taken_over %}<div class="alert ok">已由人工接管：AI 不会再向该供应商自动发送任何消息，仅提供资料整理、翻译、比价与拟稿。</div>{% endif %}
+{% if s.opted_out %}<div class="alert err">供应商已拒绝或要求停止联系，系统永久停止自动消息。</div>{% endif %}
+<div class="grid g2">
+<div class="card">
+  <h2>基本信息</h2>
+  <p>官网：<a href="{{ s.website }}" target="_blank" rel="noopener">{{ s.website }}</a>　域名：{{ s.domain }}　国家：{{ s.country_hint or '未识别' }}</p>
+  <p class="small muted">建档 {{ s.created_at|dt }}｜最近发出 {{ s.last_outbound_at|dt }}｜最近收到 {{ s.last_inbound_at|dt }}｜已跟进 {{ s.followup_count }} 次</p>
+  <h3>联系方式（来源可核对）</h3>
+  <table><tr><th>类型</th><th>值</th><th>来源</th></tr>
+  {% for c in s.contacts %}<tr><td>{{ c.ctype }}</td><td>{{ c.value }}{% if c.bounced %} <span class="tag failed">退信</span>{% endif %}</td>
+    <td class="small">{% if c.evidence_id %}<a href="/evidence/{{ c.evidence_id }}">{{ c.source_url[:70] }}</a>{% else %}{{ c.source_url }}{% endif %}</td></tr>
+  {% else %}<tr><td colspan="3" class="muted">未找到公开联系方式</td></tr>{% endfor %}</table>
+  {% if can('staff') %}
+  <form method="post" action="/suppliers/{{ s.id }}/update" style="margin-top:10px">
+    <label>名称</label><input name="name" value="{{ s.name }}" style="width:100%">
+    <label>备注</label><textarea name="notes" rows="3">{{ s.notes }}</textarea>
+    <div class="row"><select name="status"><option value="">（不改状态）</option><option value="rejected">排除</option><option value="closed">关闭</option><option value="opted_out">标记拒绝联系</option></select><button class="sm">保存</button></div>
+  </form>
+  {% endif %}
+  {% if can('manager') %}<form method="post" action="/suppliers/{{ s.id }}/merge" class="row" style="margin-top:8px">
+    <input name="other_id" placeholder="重复档案ID" style="width:120px"><button class="ghost sm">合并到本档案</button></form>{% endif %}
+</div>
+<div class="card">
+  <h2>条件判定（{{ s.assessment.get('reason','') }}）</h2>
+  <table><tr><th>条件</th><th>等级</th><th>结论</th><th>证据状态</th></tr>
+  {% for d in s.assessment.get('detail', []) %}
+  <tr><td>{{ d.label }}</td><td>{{ d.level|label('level') }}</td><td><span class="tag {{ d.status }}">{{ d.status|label('polarity') }}</span></td>
+  <td><span class="tag {{ d.evidence_status }}">{{ d.evidence_status|label('fact_status') }}</span></td></tr>
+  {% endfor %}</table>
+  {% if s.assessment.get('risk',{}).get('hits') %}<h3>风险命中</h3><ul>{% for h in s.assessment.risk.hits %}<li><span class="tag {{ h.level }}">{{ h.level }}</span> {{ h.reason }}（{{ h.pattern }}）</li>{% endfor %}</ul>{% endif %}
+  <h3>待人工尽调核验</h3>
+  <ul class="small">{% for i in s.assessment.get('due_diligence', []) %}<li>{{ clabels.get(i.key, i.key) }}：当前 {{ i.status|label('fact_status') }}，需 {{ i.documents }}{% if i.human_only %} <b>（AI无法核实）</b>{% endif %}</li>{% endfor %}</ul>
+</div>
+</div>
+
+<div class="card"><h2>证据事实（AI 不可写入“人工已核验”）</h2>
+<table><tr><th>条件</th><th>结论</th><th>证据状态</th><th>摘录</th><th>来源</th><th>时间</th>{% if can('staff') %}<th>人工核验</th>{% endif %}</tr>
+{% for f in facts %}<tr><td>{{ clabels.get(f.key, f.key) }}</td><td><span class="tag {{ f.polarity }}">{{ f.polarity|label('polarity') }}</span> {{ f.value }}</td>
+<td><span class="tag {{ f.status }}">{{ f.status|label('fact_status') }}</span></td><td class="small">{{ f.snippet[:260] }}</td>
+<td class="small">{% if f.evidence_id %}<a href="/evidence/{{ f.evidence_id }}">网页证据#{{ f.evidence_id }}</a>{% elif f.message_id %}<a href="/messages/{{ f.message_id }}">邮件#{{ f.message_id }}</a>{% endif %}</td>
+<td class="small">{{ f.created_at|dt }}</td>
+{% if can('staff') %}<td>{% if f.status != 'human_verified' %}<form method="post" action="/facts/{{ f.id }}/verify" class="row"><select name="polarity"><option value="yes">属实</option><option value="no">不属实</option></select><input name="note" placeholder="核验说明" style="width:110px"><button class="ghost sm">确认</button></form>{% endif %}</td>{% endif %}
+</tr>{% else %}<tr><td colspan="7" class="muted">暂无</td></tr>{% endfor %}</table></div>
+
+<div class="card"><h2>已问问题</h2>
+<p class="small">{% for q in questions %}<span class="tag {{ 'done' if q.answered else 'pending' }}">{{ clabels.get(q.key, q.key) }}：问 {{ q.asked_count }} 次{{ '，已答' if q.answered else '' }}</span> {% else %}暂无{% endfor %}</p></div>
+
+<div class="card" id="messages"><h2>沟通记录</h2>
+{% for m in msgs %}
+<div class="mail {{ m.direction }}">
+  <div class="meta">{{ '← 来信' if m.direction=='in' else '→ 发出' }} · {{ m.kind|label('kind') }} · <span class="tag {{ m.status }}">{{ m.status|label('msg_status') }}</span>
+   · {{ m.from_addr if m.direction=='in' else m.to_addr }}{% if m.actual_to_addr and m.actual_to_addr != m.to_addr %}（沙盒实际发往 {{ m.actual_to_addr }}）{% endif %}
+   · {{ (m.sent_at or m.created_at)|dt }} · {{ m.created_by }} · <a href="/messages/{{ m.id }}">详情/编辑</a></div>
+  <b>{{ m.subject }}</b>
+  <pre>{{ m.body }}</pre>
+  {% if m.body_zh %}<details><summary class="small">中文翻译</summary><pre>{{ m.body_zh }}</pre></details>{% endif %}
+  {% if m.error %}<div class="small" style="color:#c0322b">{{ m.error }}</div>{% endif %}
+  {% if m.analysis and m.direction=='in' %}<div class="small muted">AI 分析：动作 {{ m.analysis.get('action') }}｜{{ m.analysis.get('reason','') }}｜意向分 {{ m.analysis.get('intent',{}).get('score') }} 信号 {{ m.analysis.get('intent',{}).get('signals') }}{% if m.analysis.get('summary_zh') %}｜摘要：{{ m.analysis.summary_zh }}{% endif %}</div>{% endif %}
+</div>
+{% else %}<p class="muted">暂无</p>{% endfor %}
+{% if can('staff') %}
+<div class="grid g2">
+<form method="post" action="/suppliers/{{ s.id }}/compose" class="card">
+  <h3>员工亲自发送（以员工身份，接管后也可用）</h3>
+  <input name="to_addr" placeholder="收件邮箱" value="{{ (s.contacts|selectattr('ctype','equalto','email')|map(attribute='value')|first) or '' }}" style="width:100%">
+  <input name="subject" placeholder="主题" style="width:100%;margin-top:6px">
+  <textarea name="body" rows="6" style="margin-top:6px"></textarea><button class="sm">发送</button>
+</form>
+<form method="post" action="/suppliers/{{ s.id }}/draft" class="card">
+  <h3>AI 辅助拟稿（只生成草稿，不发送）</h3>
+  <textarea name="instruction" rows="3" placeholder="例如：礼貌地询问能否提供公司注册证书扫描件，并要求报价包含一年维护费"></textarea>
+  <button class="ghost sm">生成草稿</button>
+</form>
+</div>
+{% endif %}
+</div>
+<div class="grid g2">
+<div class="card"><h2>网页证据（{{ evidence|length }}）</h2>
+<table><tr><th>#</th><th>URL</th><th>HTTP</th><th>SHA256</th><th>采集时间</th></tr>
+{% for e in evidence %}<tr><td><a href="/evidence/{{ e.id }}">{{ e.id }}</a></td><td class="small">{{ e.url[:80] }}{% if e.error %}<div style="color:#c0322b">{{ e.error[:100] }}</div>{% endif %}</td><td>{{ e.http_status }}</td><td class="small"><code>{{ e.sha256[:12] }}</code></td><td class="small">{{ e.fetched_at|dt }}</td></tr>{% endfor %}</table></div>
+<div class="card"><h2>关联任务 / 接管 / 操作记录</h2>
+<p class="small">{% for l,t in links %}<a href="/tasks/{{ t.id }}">#{{ t.id }} {{ t.title }}</a>（{{ l.fit_category|label('fit') }}）<br>{% endfor %}</p>
+{% for h in handoffs %}<p class="small"><span class="tag {{ h.status }}">{{ h.status }}</span> {{ h.source }} · {{ h.reason }} · {{ h.created_at|dt }}</p>{% endfor %}
+<table>{% for a in audit_rows %}<tr><td class="small">{{ a.created_at|dt }}</td><td class="small">{{ a.actor }}</td><td class="small">{{ a.action }}</td><td class="small">{{ a.detail[:120] }}</td></tr>{% endfor %}</table>
+</div></div>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>全球供应商数据库</h1><a class="btn ghost" href="/export/suppliers.csv">导出CSV</a></div>
+<form class="row card" method="get">
+  <input name="q" value="{{ q }}" placeholder="名称/域名/国家">
+  <select name="cat"><option value="">全部符合度</option>{% for k,v in LABELS.fit.items() %}<option value="{{ k }}" {{ 'selected' if cat==k }}>{{ v }}</option>{% endfor %}</select>
+  <select name="status"><option value="">全部状态</option>{% for k,v in LABELS.supplier_status.items() %}<option value="{{ k }}" {{ 'selected' if status==k }}>{{ v }}</option>{% endfor %}</select>
+  <select name="intent"><option value="">全部意向</option>{% for k,v in LABELS.intent.items() %}<option value="{{ k }}" {{ 'selected' if intent==k }}>{{ v }}</option>{% endfor %}</select>
+  <button>筛选</button>
+</form>
+<table>
+<tr><th>#</th><th>供应商</th><th>国家</th><th>渠道</th><th>符合度</th><th>得分</th><th>风险</th><th>状态</th><th>意向</th><th>联系方式</th><th>建档</th></tr>
+{% for s in rows %}<tr>
+  <td>{{ s.id }}</td>
+  <td><a href="/suppliers/{{ s.id }}">{{ s.name }}</a><div class="small muted">{{ s.domain }}</div></td>
+  <td class="small">{{ s.country_hint }}</td><td class="small">{{ s.source_channel }}</td>
+  <td><span class="tag {{ s.fit_category }}">{{ s.fit_category|label('fit') }}</span></td><td>{{ s.fit_score }}</td>
+  <td><span class="tag {{ s.risk_level }}">{{ s.risk_level|label('risk') }}</span></td>
+  <td><span class="tag {{ s.status }}">{{ s.status|label('supplier_status') }}</span>{% if s.taken_over %} <span class="small">(AI停发)</span>{% endif %}</td>
+  <td><span class="tag {{ s.intent_level }}">{{ s.intent_level|label('intent') }}</span> <span class="small muted">{{ s.intent_score|int }}</span></td>
+  <td class="small">{% for c in s.contacts[:3] %}{{ c.ctype }}: {{ c.value }}{% if c.bounced %}(退信){% endif %}<br>{% endfor %}{% if s.contacts|length > 3 %}…{% endif %}</td>
+  <td class="small">{{ s.created_at|dt }}</td>
+</tr>{% else %}<tr><td colspan="11" class="muted">暂无供应商</td></tr>{% endfor %}
+</table>
+{% endblock %}

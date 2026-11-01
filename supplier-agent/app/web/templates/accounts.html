@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>多平台账号管理</h1></div>
+<div class="alert">凭据经 Fernet 加密后保存在本机数据库（密钥位于数据目录 secret.key），页面不回显密码。授权失效时系统会自动通知并暂停该账号的发送。社交平台采用“人工确认模式”，系统不保存其登录密码。</div>
+<table><tr><th>#</th><th>平台</th><th>名称</th><th>状态</th><th>默认</th><th>最近检查</th><th>错误</th><th>操作</th></tr>
+{% for a in rows %}<tr><td>{{ a.id }}</td><td>{{ connectors[a.platform].label }}</td><td>{{ a.name }}</td>
+<td><span class="tag {{ a.status }}">{{ a.status|label('acc_status') }}</span></td><td>{{ '是' if a.is_default else '' }}</td>
+<td class="small">{{ a.last_check_at|dt }}</td><td class="small">{{ a.last_error[:150] }}</td>
+<td>{% if can('manager') %}{% for act,l in [('verify','检测'),('default','设为默认'),('disable','停用'),('delete','删除')] %}
+<form class="inline" method="post" action="/accounts/{{ a.id }}/{{ act }}"><button class="{{ 'danger' if act=='delete' else 'ghost' }} sm">{{ l }}</button></form>{% endfor %}{% endif %}</td></tr>
+{% else %}<tr><td colspan="8" class="muted">尚未添加账号。请先添加用于发送开发信的邮箱。</td></tr>{% endfor %}</table>
+
+<h2 style="margin-top:20px">平台能力说明 / 添加账号</h2>
+<div class="grid g2">
+{% for key, c in connectors.items() %}
+<div class="card">
+  <h3>{{ c.label }}</h3>
+  <p class="small">{{ c.note }}</p>
+  <p class="small">自动化能力：{% for k,v in c.capabilities.items() %}<code>{{ k }}={{ v }}</code> {% endfor %}</p>
+  {% if can('manager') %}
+  <form method="post" action="/accounts"><input type="hidden" name="platform" value="{{ key }}">
+    <div class="grid g2">
+    <div><label>账号名称</label><input name="name" placeholder="{{ c.label }}"></div>
+    <div><label>更新已有账号ID（可选）</label><input name="account_id"></div>
+    {% for name, label, typ in c.config_fields %}<div><label>{{ label }}</label><input name="cfg_{{ name }}" type="{{ 'password' if typ=='password' else 'text' }}" autocomplete="off"></div>{% endfor %}
+    </div><p><button class="sm">保存并检测</button></p>
+  </form>{% endif %}
+</div>
+{% endfor %}
+</div>
+{% endblock %}
