@@ -111,8 +111,7 @@ CRITERIA = [
         "key": "incorporation_age",
         "label": "成立时间",
         "zh_keywords": ["成立", "年以上", "老公司"],
-        "positive": ["aged compan", "vintage compan", "incorporated in", "established in", "year old compan",
-                     "years old", "gegründet", "costituita nel", "constituida en"],
+        "positive": ["aged compan", "vintage compan", "year old compan", "years old compan"],
         "negative": [],
         "question_en": "When was each available company incorporated?",
         "question_zh": "可售公司分别成立于何时？",
@@ -293,6 +292,7 @@ OUTREACH_TEMPLATE = {
         "legitimate operations.\n\n"
         "Could you help us with the following?\n{questions}\n"
         "If it is easier, a current list of available companies with prices would be a great start.\n\n"
+        "If this is not relevant to you, just let us know and we will not write again.\n\n"
         "{signature}"
     ),
 }
@@ -371,10 +371,12 @@ def default_skills() -> list[dict]:
                     "levels": LEVELS,
                     "weights": {"required": 3, "preferred": 1, "to_confirm": 0, "not_required": 0},
                     "contact_categories": ["match", "insufficient"],
+                    "web_negative_is_fail": False,
                 },
                 "decision_rules": [
                     "供应商网站无任何现成公司/公司注册服务相关内容 → 不符合。",
-                    "任一“必须满足”条件有明确反向证据 → 不符合。",
+                    "任一“必须满足”条件被供应商回复/文件/人工核验明确否定 → 不符合。",
+                    "网站上的反向表述（web_negative_is_fail=false 时）只记为待确认并在询价中追问，不直接淘汰。",
                     "风险分级为高 → 风险较高（不自动联系，转人工复核）。",
                     "所有“必须满足”条件均有正向证据 → 符合。",
                     "其余情况 → 资料不足（自动发询价补齐）。",

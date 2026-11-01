@@ -141,6 +141,9 @@ def run_round(task_id: int) -> None:
         if task.status in ("paused", "cancelled", "completed"):
             return
         task.status, task.last_error = "running", ""
+        # Rounds of one task never overlap, so leftovers are from a crash/restart; free them for retry.
+        db.query(SearchRun).filter(SearchRun.task_id == task_id, SearchRun.status.in_(["pending", "running"])) \
+            .update({"status": "interrupted"})
         task.rounds_done += 1
         round_no = task.rounds_done
         st = settings.all_settings(db)

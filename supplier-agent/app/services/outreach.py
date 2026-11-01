@@ -42,12 +42,20 @@ def _service_hint(db: Session, sup: Supplier) -> str:
     return "ready-made companies"
 
 
+_THE = {"United Kingdom", "United States", "Czech Republic", "Netherlands", "United Arab Emirates", "Philippines"}
+
+
 def task_country(task: ProcurementTask | None, sup: Supplier) -> str:
-    if sup.country_hint:
-        return sup.country_hint.split(",")[0]
+    name = ""
     if task and task.spec.get("countries"):
-        return task.spec["countries"][0]["name"]
-    return "your jurisdiction"
+        targets = [c["name"] for c in task.spec["countries"]]
+        hinted = [c for c in sup.country_hint.split(",") if c in targets]
+        name = hinted[0] if hinted else targets[0]
+    elif sup.country_hint:
+        name = sup.country_hint.split(",")[0]
+    if not name:
+        return "your jurisdiction"
+    return f"the {name}" if name in _THE else name
 
 
 def compose_initial(db: Session, sup: Supplier, task: ProcurementTask) -> Message | None:

@@ -101,6 +101,12 @@ def screen_supplier(db: Session, sup: Supplier, task: ProcurementTask, page_text
         risk["level"] = "high"
     levels = dict(task.spec.get("levels", {}))
     facts = {k: v["polarity"] for k, v in summary.items()}
+    web_negatives = []
+    if not rules.get("web_negative_is_fail", False):
+        for k, v in summary.items():
+            if v["polarity"] == "no" and v["status"] == "web_claim" and levels.get(k) == "required":
+                facts[k] = "unknown"
+                web_negatives.append(k)
     if task.spec.get("countries"):
         levels = {"country": "required", **levels}
         facts["country"] = "yes" if sup.country_hint else "unknown"
@@ -110,6 +116,12 @@ def screen_supplier(db: Session, sup: Supplier, task: ProcurementTask, page_text
             d["label"] = "目标国家"
         st = summary.get(d["key"], {}).get("status")
         d["evidence_status"] = st or "unknown"
+    if web_negatives:
+        labels = {c["key"]: c["label"] for c in rules.get("criteria", [])}
+        res["reason"] += "；网站有反向表述待供应商确认: " + ", ".join(labels.get(k, k) for k in web_negatives)
+        for d in res["detail"]:
+            if d["key"] in web_negatives:
+                d["status"] = "no"
     res["risk"] = risk
     res["due_diligence"] = R.due_diligence({k: v["status"] for k, v in summary.items()},
                                            skills.get_rules(db, "due_diligence"), rules.get("criteria", []))

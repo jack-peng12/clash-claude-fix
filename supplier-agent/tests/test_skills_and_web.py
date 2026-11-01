@@ -37,6 +37,24 @@ def test_skill_versioning_blocks_broken_rules(db):
     assert skills.get_rules(db, "handoff")["handoff_threshold"] == 55
 
 
+def test_web_negative_needs_supplier_confirmation(db):
+    from app.models import ProcurementTask
+    from app.services import suppliers as S
+
+    t = ProcurementTask(title="t", spec={"countries": [], "levels": {"inventory": "required",
+                                                                       "vat_registered": "required"}})
+    s = Supplier(name="X", domain="x.test", website="https://x.test", description="uk shelf companies for sale")
+    db.add_all([t, s])
+    db.flush()
+    S.add_fact(db, s, "inventory", "yes", "web_claim", "shelf companies")
+    S.add_fact(db, s, "vat_registered", "no", "web_claim", "sold without VAT")
+    assert S.screen_supplier(db, s, t)["category"] == "insufficient"
+    S.add_fact(db, s, "vat_registered", "no", "supplier_claim", "No, none of our companies has VAT")
+    assert S.screen_supplier(db, s, t)["category"] == "no_match"
+    with pytest.raises(ValueError):
+        S.add_fact(db, s, "vat_registered", "yes", "human_verified", "AI must not do this")
+
+
 @pytest.fixture()
 def client(fresh_db):
     from app.main import app

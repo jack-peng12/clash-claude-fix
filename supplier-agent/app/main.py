@@ -14,6 +14,8 @@ from .security import hash_password, session_secret
 from .skills import engine as skills
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+for _noisy in ("httpx", "primp", "ddgs", "ddgs.ddgs", "trafilatura"):
+    logging.getLogger(_noisy).setLevel(logging.WARNING)
 
 
 def bootstrap() -> None:

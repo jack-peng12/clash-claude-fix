@@ -1,0 +1,8 @@
+data/
+tests/
+docs/
+dist/
+**/__pycache__
+*.pyc
+.pytest_cache
+deploy/

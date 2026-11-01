@@ -1,0 +1,28 @@
+services:
+  agent:
+    image: supplier-agent:latest
+    build: .
+    container_name: supplier-agent
+    restart: unless-stopped
+    ports:
+      - "${SA_PORT:-8000}:8000"
+    volumes:
+      - ./data:/data
+    environment:
+      SA_ADMIN_USERNAME: ${SA_ADMIN_USERNAME:-admin}
+      SA_ADMIN_PASSWORD: ${SA_ADMIN_PASSWORD:-admin123}
+      # Optional: an OpenAI-compatible key here overrides the one saved in the admin UI.
+      SA_LLM_API_KEY: ${SA_LLM_API_KEY:-}
+      SA_LLM_BASE_URL: ${SA_LLM_BASE_URL:-}
+      SA_LLM_MODEL: ${SA_LLM_MODEL:-}
+
+  # Local SMTP/IMAP test mailbox for acceptance tests and staff training. Not used in production.
+  testmail:
+    image: greenmail/standalone:2.1.2
+    container_name: supplier-agent-testmail
+    profiles: ["test"]
+    environment:
+      GREENMAIL_OPTS: "-Dgreenmail.setup.test.smtp -Dgreenmail.setup.test.imap -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled"
+    ports:
+      - "3025:3025"
+      - "3143:3143"
