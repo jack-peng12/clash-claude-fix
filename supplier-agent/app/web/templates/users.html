@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>员工权限管理</h1></div>
+<div class="card small">角色说明：<b>管理员</b> 全部权限（用户、系统设置、恢复）；<b>主管</b> Skill规则编辑、账号管理、交还AI、合并档案、日志、备份；<b>业务员</b> 任务、供应商、消息审核与发送、接管；<b>只读</b> 仅查看。</div>
+<table><tr><th>#</th><th>用户名</th><th>姓名</th><th>角色</th><th>状态</th><th>创建</th><th>修改</th></tr>
+{% for u in rows %}<tr><td>{{ u.id }}</td><td>{{ u.username }}</td><td>{{ u.display_name }}</td><td>{{ ROLE_LABEL[u.role] }}</td>
+<td>{{ '启用' if u.active else '停用' }}</td><td class="small">{{ u.created_at|dt }}</td>
+<td><form class="row" method="post" action="/users/{{ u.id }}/update">
+<select name="role">{% for r,l in ROLE_LABEL.items() %}<option value="{{ r }}" {{ 'selected' if u.role==r }}>{{ l }}</option>{% endfor %}</select>
+<label><input type="checkbox" name="active" {{ 'checked' if u.active }}>启用</label>
+<input name="password" type="password" placeholder="重置密码(可选)" style="width:130px"><button class="ghost sm">保存</button></form></td></tr>{% endfor %}</table>
+<form class="card" method="post" action="/users" style="margin-top:16px"><h2>新增员工</h2>
+<div class="row"><input name="username" placeholder="用户名" required><input name="display_name" placeholder="姓名"><input name="password" type="password" placeholder="初始密码" required>
+<select name="role">{% for r,l in ROLE_LABEL.items() %}<option value="{{ r }}" {{ 'selected' if r=='staff' }}>{{ l }}</option>{% endfor %}</select><button>新增</button></div></form>
+{% endblock %}

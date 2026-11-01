@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>API 及运行成本</h1></div>
+<div class="grid g4" style="margin-bottom:16px">
+<div class="stat"><b>${{ '%.4f'|format(budget.day) }}</b><span>今日 LLM 费用 / 上限 ${{ budget.daily_limit }}</span></div>
+<div class="stat"><b>${{ '%.4f'|format(budget.month) }}</b><span>本月 LLM 费用 / 上限 ${{ budget.monthly_limit }}</span></div>
+<div class="stat"><b>{{ '已超限，自动降级为规则模式' if budget.exceeded else '正常' }}</b><span>预算状态</span></div>
+<div class="stat"><b>0</b><span>搜索 API 费用（ddgs 元搜索免费，受频率限制）</span></div>
+</div>
+<div class="grid g2">
+<div class="card"><h2>按用途</h2><table><tr><th>用途</th><th>次数</th><th>输入tokens</th><th>输出tokens</th><th>费用USD</th></tr>
+{% for p,n,i,o,c in by_purpose %}<tr><td>{{ p }}</td><td>{{ n }}</td><td>{{ i }}</td><td>{{ o }}</td><td>{{ '%.4f'|format(c or 0) }}</td></tr>{% else %}<tr><td colspan="5" class="muted">暂无 LLM 调用</td></tr>{% endfor %}</table></div>
+<div class="card"><h2>按日</h2><table><tr><th>日期(UTC)</th><th>LLM费用</th></tr>{% for d,c in by_day %}<tr><td>{{ d }}</td><td>{{ '%.4f'|format(c or 0) }}</td></tr>{% endfor %}</table>
+<h3>搜索次数</h3><table><tr><th>日期(UTC)</th><th>关键词数</th></tr>{% for d,n in searches %}<tr><td>{{ d }}</td><td>{{ n }}</td></tr>{% endfor %}</table></div>
+</div>
+{% endblock %}

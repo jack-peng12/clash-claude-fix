@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}供应商开发Agent{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<div class="layout">
+<nav class="side">
+  <div class="brand">全球现成公司<br>供应商开发Agent<small>{{ user.display_name or user.username }} · {{ ROLE_LABEL[user.role] }}</small></div>
+  {% set p = request.url.path %}
+  <a href="/" class="{{ 'on' if p == '/' }}">工作台{% if unread %} <span class="tag">{{ unread }}</span>{% endif %}</a>
+  <div class="grp">采购开发</div>
+  <a href="/tasks" class="{{ 'on' if p.startswith('/tasks') }}">采购任务</a>
+  <a href="/suppliers" class="{{ 'on' if p.startswith('/suppliers') }}">供应商数据库</a>
+  <a href="/handoffs" class="{{ 'on' if p.startswith('/handoffs') }}">高意向接管中心</a>
+  <a href="/messages" class="{{ 'on' if p.startswith('/messages') }}">沟通记录</a>
+  <a href="/quotes" class="{{ 'on' if p.startswith('/quotes') }}">报价比较</a>
+  <a href="/manual" class="{{ 'on' if p.startswith('/manual') }}">人工确认待办</a>
+  <div class="grp">配置</div>
+  <a href="/skills" class="{{ 'on' if p.startswith('/skills') }}">业务Skill与规则</a>
+  <a href="/accounts" class="{{ 'on' if p.startswith('/accounts') }}">多平台账号</a>
+  {% if can('admin') %}<a href="/users" class="{{ 'on' if p.startswith('/users') }}">员工权限</a>{% endif %}
+  <a href="/costs" class="{{ 'on' if p.startswith('/costs') }}">API与成本</a>
+  {% if can('manager') %}<a href="/logs" class="{{ 'on' if p.startswith('/logs') }}">系统日志</a>{% endif %}
+  <a href="/settings" class="{{ 'on' if p.startswith('/settings') }}">系统设置/备份</a>
+  <a href="/logout">退出登录</a>
+</nav>
+<main>
+{% block body %}{% endblock %}
+</main>
+</div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>网页证据 #{{ e.id }}</h1>{% if e.supplier_id %}<a class="btn ghost" href="/suppliers/{{ e.supplier_id }}">返回供应商</a>{% endif %}</div>
+<div class="card small">
+  请求URL：<a href="{{ e.url }}" target="_blank" rel="noopener">{{ e.url }}</a><br>
+  最终URL：{{ e.final_url }}　HTTP {{ e.http_status }}　采集时间 {{ e.fetched_at|dt('%Y-%m-%d %H:%M:%S') }}（北京时间）<br>
+  标题：{{ e.title }}<br>SHA256：<code>{{ e.sha256 }}</code>　文件：<code>{{ e.html_path }}</code>
+  {% if e.html_path %}　<a href="/evidence/{{ e.id }}?raw=1">查看原始HTML源码</a>{% endif %}
+  {% if e.error %}<div class="alert err">{{ e.error }}</div>{% endif %}
+</div>
+<div class="card"><h2>提取正文</h2><pre>{{ text }}</pre></div>
+{% endblock %}

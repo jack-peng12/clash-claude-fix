@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>业务 Skill 与规则</h1></div>
+<div class="alert">当前 Skill 规则为开发者编写的通用行业规则（v1）。公司六份内部培训资料尚未导入，每个 Skill 的“资料来源”均标记为“未提供”。资料提供后应逐条对照修订，有冲突的价格/付款/业务规则记入 pending_conflicts 待负责人确认。</div>
+<table><tr><th>Skill</th><th>说明</th><th>启用版本</th><th>版本数</th><th>最新测试</th></tr>
+{% for s in rows %}{% set vs = vers[s.id] %}<tr>
+<td><a href="/skills/{{ s.key }}">{{ s.name }}</a><div class="small muted">{{ s.key }}</div></td><td class="small">{{ s.description }}</td>
+<td>v{{ s.active_version }}</td><td>{{ vs|length }}</td>
+<td>{% set tr = vs[0].test_result %}{% if tr %}<span class="tag {{ 'done' if tr.passed else 'failed' }}">{{ tr.total - tr.failed }}/{{ tr.total }}</span>{% else %}<a href="/skills/{{ s.key }}">运行</a>{% endif %}</td></tr>{% endfor %}
+</table>
+{% endblock %}

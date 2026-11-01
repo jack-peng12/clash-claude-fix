@@ -1,0 +1,50 @@
+:root{--bg:#f5f6f8;--card:#fff;--line:#e3e6eb;--text:#1f2933;--muted:#6b7684;--pri:#2457d6;--ok:#16794a;--warn:#b26a00;--bad:#c0322b;--side:#18212f}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.55 -apple-system,"Segoe UI","Microsoft YaHei","PingFang SC",sans-serif;color:var(--text);background:var(--bg)}
+a{color:var(--pri);text-decoration:none}a:hover{text-decoration:underline}
+.layout{display:flex;min-height:100vh}
+nav.side{width:212px;background:var(--side);color:#cfd6e0;padding:14px 0;flex-shrink:0;position:sticky;top:0;height:100vh;overflow:auto}
+nav.side .brand{color:#fff;font-weight:600;padding:4px 18px 14px;font-size:15px;line-height:1.3}
+nav.side .brand small{display:block;color:#8a96a8;font-weight:400;font-size:12px}
+nav.side a{display:block;color:#cfd6e0;padding:7px 18px;font-size:13.5px}
+nav.side a:hover,nav.side a.on{background:#243049;color:#fff;text-decoration:none}
+nav.side .grp{color:#6f7d92;font-size:12px;padding:12px 18px 4px}
+main{flex:1;padding:20px 26px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:12px 0 6px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1100px){.g3,.g4{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px}
+.stat b{display:block;font-size:24px}.stat span{color:var(--muted);font-size:12.5px}
+table{width:100%;border-collapse:collapse;background:var(--card)}
+th,td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+th{background:#fafbfc;font-weight:600;color:#3d4753;font-size:13px;white-space:nowrap}
+tr:hover td{background:#fafcff}
+.muted{color:var(--muted)}.small{font-size:12.5px}
+.tag{display:inline-block;padding:1px 7px;border-radius:10px;font-size:12px;background:#eef1f5;color:#3d4753;white-space:nowrap}
+.tag.match,.tag.sent,.tag.active,.tag.high,.tag.yes,.tag.human_verified,.tag.done,.tag.completed{background:#e3f4ea;color:var(--ok)}
+.tag.insufficient,.tag.medium,.tag.draft,.tag.queued,.tag.paused,.tag.unverified,.tag.to_confirm,.tag.open,.tag.pending,.tag.supplier_claim,.tag.web_claim,.tag.doc_provided{background:#fff4e0;color:var(--warn)}
+.tag.no_match,.tag.failed,.tag.blocked,.tag.high_risk,.tag.expired,.tag.error,.tag.no,.tag.cancelled,.tag.opted_out{background:#fde8e7;color:var(--bad)}
+.tag.running,.tag.human_takeover,.tag.accepted,.tag.received{background:#e5edff;color:var(--pri)}
+.btn,button{display:inline-block;border:1px solid var(--pri);background:var(--pri);color:#fff;padding:6px 12px;border-radius:6px;font-size:13px;cursor:pointer;font-family:inherit}
+.btn:hover,button:hover{filter:brightness(1.07);text-decoration:none}
+.btn.ghost,button.ghost{background:#fff;color:var(--pri)}
+.btn.danger,button.danger{background:var(--bad);border-color:var(--bad)}
+.btn.sm,button.sm{padding:3px 8px;font-size:12px}
+form.inline{display:inline}
+input,select,textarea{font:inherit;border:1px solid #cdd3dc;border-radius:6px;padding:6px 8px;background:#fff;max-width:100%}
+textarea{width:100%}
+label{display:block;margin:8px 0 3px;color:#3d4753;font-size:13px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.alert{padding:10px 12px;border-radius:6px;margin-bottom:12px;background:#fff4e0;color:#7a4b00;border:1px solid #f1d39b}
+.alert.err{background:#fde8e7;color:#8b1f1a;border-color:#f3b8b4}
+.alert.ok{background:#e3f4ea;color:#0f5a36;border-color:#a9d9bd}
+pre{white-space:pre-wrap;word-break:break-word;background:#f7f8fa;border:1px solid var(--line);padding:10px;border-radius:6px;font-size:12.5px;max-height:520px;overflow:auto}
+.mail{border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin-bottom:10px;background:#fff}
+.mail.in{border-left:4px solid var(--pri)}.mail.out{border-left:4px solid #9aa5b4}
+.mail .meta{font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.login{max-width:360px;margin:12vh auto}
+.notes li{margin-bottom:6px}
+.tabs a{margin-right:14px}.tabs a.on{font-weight:600;color:var(--text)}
+code{background:#f1f3f6;padding:1px 4px;border-radius:4px;font-size:12.5px}

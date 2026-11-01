@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>新建采购任务</h1></div>
+<div class="card">
+  <h2>第一步：用中文描述采购需求</h2>
+  <form method="post" action="/tasks/parse">
+    <textarea name="raw_text" rows="5" placeholder="例如：找20家英国现成公司供应商，必须带VAT和企业银行账户，成立2年以上，未注册过亚马逊，董事最好能继续任职，预算每家3000英镑以内">{{ raw or (tpl.raw_text if tpl else '') }}</textarea>
+    <p><button>AI 解析需求</button>
+    {% if templates_ %}<span class="muted small">　或从模板开始：{% for t in templates_ %}<a href="/tasks/new?template_id={{ t.id }}">{{ t.title }}</a>　{% endfor %}</span>{% endif %}</p>
+  </form>
+</div>
+{% if preview %}
+<div class="card">
+  <h2>第二步：确认结构化任务（可修改）</h2>
+  <p class="small muted">解析方式：{{ preview.parser }}{% if preview.notes %}　未归类要求：{{ preview.notes }}{% endif %}</p>
+  <form method="post" action="/tasks">
+    <input type="hidden" name="spec_json" value='{{ preview|tojson|forceescape }}'>
+    <input type="hidden" name="raw_text" value="{{ raw }}">
+    <div class="grid g3">
+      <div><label>任务名称</label><input name="title" value="{{ (preview.countries|map(attribute='zh')|join('、')) or '采购' }}现成公司采购" style="width:100%"></div>
+      <div><label>国家（中/英文，逗号分隔）</label><input name="countries" value="{{ preview.countries|map(attribute='zh')|join(',') }}" style="width:100%"></div>
+      <div><label>公司类型</label><input name="company_types" value="{{ preview.company_types|join(',') }}" style="width:100%"></div>
+      <div><label>目标可联系供应商数量</label><input name="target_suppliers" type="number" value="{{ preview.target_suppliers }}"></div>
+    </div>
+    {% if preview.params %}<p class="small">参数：{% for k,v in preview.params.items() %}<code>{{ k }}={{ v }}</code> {% endfor %}</p>{% endif %}
+    <h3>采购条件</h3>
+    {% with levels=preview.levels %}{% include "_levels.html" %}{% endwith %}
+    <div class="row" style="margin-top:12px">
+      <label><input type="checkbox" name="auto_outreach"> 自动发送开发信/追问/跟进（不勾选则生成草稿待员工审核）</label>
+      <label><input type="checkbox" name="continuous"> 持续开发（达到目标后按间隔继续搜索新供应商）</label>
+      <label><input type="checkbox" name="is_template"> 保存为模板</label>
+      <label><input type="checkbox" name="start_now" checked> 立即启动</label>
+    </div>
+    <p><button>创建任务</button></p>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

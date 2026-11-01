@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block body %}
+<div class="top"><h1>消息 #{{ m.id }} <span class="tag {{ m.status }}">{{ m.status|label('msg_status') }}</span></h1>
+{% if s %}<a class="btn ghost" href="/suppliers/{{ s.id }}">供应商：{{ s.name }}</a>{% endif %}</div>
+<div class="card small">方向 {{ m.direction }}｜类型 {{ m.kind|label('kind') }}｜创建者 {{ m.created_by }}｜收件 {{ m.to_addr }}｜实际发往 {{ m.actual_to_addr }}｜发件 {{ m.from_addr }}
+｜Message-ID <code>{{ m.header_message_id }}</code>｜尝试 {{ m.attempts }}｜{{ m.created_at|dt }} / 发送 {{ m.sent_at|dt }}
+{% if m.error %}<div class="alert err">{{ m.error }}</div>{% endif %}</div>
+{% if m.direction == 'out' and m.status in ['draft','failed','blocked'] and can('staff') %}
+<form class="card" method="post" action="/messages/{{ m.id }}/update">
+  {% if s and s.taken_over %}<div class="alert">该供应商已人工接管：批准发送后，此消息将以 <b>{{ user.username }}</b> 的身份发出。</div>{% endif %}
+  <label>收件人</label><input name="to_addr" value="{{ m.to_addr }}" style="width:100%">
+  <label>主题</label><input name="subject" value="{{ m.subject }}" style="width:100%">
+  <label>正文</label><textarea name="body" rows="14">{{ m.body }}</textarea>
+  <div class="row"><button name="action" value="approve">批准并发送</button><button class="ghost" name="action" value="save">仅保存</button>
+  <button class="danger" name="action" value="discard">放弃</button></div>
+</form>
+{% else %}
+<div class="card"><b>{{ m.subject }}</b><pre>{{ m.body }}</pre>{% if m.body_zh %}<h3>中文翻译</h3><pre>{{ m.body_zh }}</pre>{% endif %}</div>
+{% endif %}
+{% if m.direction == 'in' and not m.supplier_id and can('staff') %}
+<form class="card row" method="post" action="/messages/{{ m.id }}/assign"><span>关联到供应商ID：</span><input name="supplier_id" style="width:100px"><button class="sm">关联并分析</button></form>
+{% endif %}
+{% if m.analysis %}<div class="card"><h2>AI 分析</h2><pre>{{ m.analysis|pretty }}</pre></div>{% endif %}
+{% endblock %}

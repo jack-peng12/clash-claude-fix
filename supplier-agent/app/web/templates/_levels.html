@@ -1,0 +1,11 @@
+{# expects: criteria, levels #}
+<table>
+<tr><th>条件</th><th>必须满足</th><th>优先满足</th><th>待确认</th><th>不作要求</th></tr>
+{% for c in criteria %}
+{% set cur = levels.get(c.key, 'not_required') %}
+<tr><td>{{ c.label }}{% if c.always_human_verify %} <span class="tag to_confirm">须人工核验</span>{% endif %}</td>
+{% for lv in ['required','preferred','to_confirm','not_required'] %}
+<td><input type="radio" name="level_{{ c.key }}" value="{{ lv }}" {{ 'checked' if cur == lv }}></td>
+{% endfor %}</tr>
+{% endfor %}
+</table>
